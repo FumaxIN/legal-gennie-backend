@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'django_filters',
+    'vendor',
 ]
 
 MIDDLEWARE = [
@@ -119,6 +120,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'vendor.User'
 
 # django-rest-framework
 # -------------------------------------------------------------------------------
