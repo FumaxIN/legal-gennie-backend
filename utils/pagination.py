@@ -1,4 +1,5 @@
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
 
 
 class CustomLimitOffsetPagination(LimitOffsetPagination):
@@ -14,4 +15,4 @@ class CustomLimitOffsetPagination(LimitOffsetPagination):
             "results": data,
         }
 
-        return response_data
+        return Response(response_data)
