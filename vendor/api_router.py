@@ -4,6 +4,7 @@ from rest_framework_nested import routers
 
 from vendor.views.auth import APIRegistrationView, APILoginView
 from vendor.views.vendors import VendorViewSet
+from vendor.views.purchaseorders import PurchaseOrderViewSet
 
 app_name = "vendor"
 
@@ -13,6 +14,7 @@ if settings.DEBUG:
 
 
 router.register(r"vendors", VendorViewSet)
+router.register(r"purchase_orders", PurchaseOrderViewSet)
 
 
 auth_urls = [

@@ -152,7 +152,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Api for vendor management system",
     "VERSION": "4.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "SCHEMA_PATH_PREFIX": "/v1/",
+    "SCHEMA_PATH_PREFIX": "/api/",
     "LICENSE": {
         "name": "MIT License",
     },

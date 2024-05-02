@@ -18,23 +18,23 @@ urlpatterns = [
 # API URLs
 api_urlpatterns = [
     # API base URL
-    path("v1/", include("vendor.api_router")),
-    path("v1/schema", SpectacularAPIView.as_view(), name="schema"),
+    path("api/", include("vendor.api_router")),
+    path("api/schema", SpectacularAPIView.as_view(), name="schema"),
 ]
 
 if settings.DEBUG:
     api_urlpatterns += [
         path(
-            "v1/schema/swagger/",
+            "api/schema/swagger/",
             SpectacularSwaggerView.as_view(url_name="schema"),
             name="swagger-ui",
         ),
         path(
-            "v1/schema/redoc/",
+            "api/schema/redoc/",
             SpectacularRedocView.as_view(url_name="schema"),
             name="redoc",
         ),
-        path("", RedirectView.as_view(url="/v1/schema/swagger/", permanent=False)),
+        path("", RedirectView.as_view(url="/api/schema/swagger/", permanent=False)),
         path(
             "400/",
             default_views.bad_request,
