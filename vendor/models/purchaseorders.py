@@ -1,3 +1,4 @@
+from django.utils.timezone import now
 from uuid import uuid4
 from django.db import models
 
@@ -7,14 +8,14 @@ from .vendors import Vendor
 class PurchaseOrder(models.Model):
     po_number = models.UUIDField(default=uuid4, unique=True, db_index=True)
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
-    order_date = models.DateField()
-    delivery_date = models.DateField()  # expected delivery date
+    order_date = models.DateTimeField(default=now)
+    delivery_date = models.DateTimeField()
     items = models.JSONField()
     quantity = models.IntegerField()    # number of items in the PO
     status = models.CharField(max_length=20, default="pending")
     quality_rating = models.FloatField(default=0.0, blank=True, null=True)
-    issue_date = models.DateField(blank=True, null=True)    # date when the PO was issued to vendor
-    acknowledgment_date = models.DateField(blank=True, null=True)    # date when the vendor acknowledged the PO
+    issue_date = models.DateTimeField(default=now)    # date when the PO was issued
+    acknowledgment_date = models.DateTimeField(blank=True, null=True)    # date when the PO was acknowledged
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

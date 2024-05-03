@@ -5,6 +5,7 @@ from djangoql.admin import DjangoQLSearchMixin
 from .models.users import User
 from .models.vendors import Vendor
 from .models.purchaseorders import PurchaseOrder
+from .models.performance import HistoricalPerformance
 
 
 @admin.register(User)
@@ -68,4 +69,9 @@ class VendorAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
+    pass
+
+
+@admin.register(HistoricalPerformance)
+class HistoricalPerformanceAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
     pass

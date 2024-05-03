@@ -26,10 +26,32 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             'issue_date',
             'acknowledgment_date',
         )
-        read_only_fields = ('po_number', 'vendor', 'quantity')
+        read_only_fields = (
+            'po_number',
+            'vendor',
+            'quantity',
+            'status',
+            'order_date',
+            'quality_rating',
+            'issue_date',
+            'acknowledgment_date'
+        )
 
     def create(self, validated_data):
         vendor_id = validated_data.pop('vendor_id')
         vendor = get_object_or_404(Vendor, vendor_code=vendor_id)
         return PurchaseOrder.objects.create(vendor=vendor, **validated_data)
 
+
+class CompletePurchaseOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseOrder
+        fields = (
+            'quality_rating',
+        )
+
+    def update(self, instance, validated_data):
+        instance.status = 'completed'
+        instance.quality_rating = validated_data.get('quality_rating')
+        instance.save()
+        return instance

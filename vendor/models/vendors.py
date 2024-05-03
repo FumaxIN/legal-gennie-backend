@@ -17,5 +17,18 @@ class Vendor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
 
+    cache_data = models.JSONField(blank=True, null=True)
+
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.cache_data:
+            self.cache_data = {
+                "tot_pos": 0,
+                "tot_completed_pos": 0,
+                "tot_on_time_deliveries": 0,
+                "tot_acknowledged_pos": 0,
+            }
+
+        return super().save(*args, **kwargs)
