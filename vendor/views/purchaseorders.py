@@ -5,6 +5,7 @@ from rest_framework import permissions, status
 from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveModelMixin, DestroyModelMixin
 from utils.mixins import PartialUpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
+from django_filters.rest_framework import CharFilter, FilterSet
 
 from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema
@@ -16,6 +17,11 @@ from vendor.serializers import PurchaseOrderSerializer, CompletePurchaseOrderSer
 from vendor.tasks.performance import calculate_avg_response_time, calculate_performance_metrics
 
 
+class PurchaseOrderFilter(FilterSet):
+    vendor_name = CharFilter(field_name="vendor__name", lookup_expr="icontains")
+    vendor_code = CharFilter(field_name="vendor__vendor_code", lookup_expr="exact")
+
+
 class PurchaseOrderViewSet(
     CreateModelMixin,
     RetrieveModelMixin,
@@ -25,6 +31,7 @@ class PurchaseOrderViewSet(
     GenericViewSet,
 ):
     queryset = PurchaseOrder.objects.all()
+    filterset_class = PurchaseOrderFilter
     serializer_class = PurchaseOrderSerializer
     serializer_action_classes = {
         "complete": CompletePurchaseOrderSerializer,

@@ -12,9 +12,9 @@ def calculate_avg_response_time(po_id):
     vendor = po.vendor
     tot_acknowledged_pos = vendor.cache_data["tot_acknowledged_pos"]
     po_response_time = po.acknowledgment_date - po.issue_date
-    po_response_time_minutes = po_response_time.seconds / 60
+    po_response_time_seconds = po_response_time.seconds
     vendor.avg_response_time = (
-                                       (vendor.avg_response_time * tot_acknowledged_pos) + po_response_time_minutes
+                                       (vendor.avg_response_time * tot_acknowledged_pos) + po_response_time_seconds
                                ) / (tot_acknowledged_pos + 1)
 
     vendor.cache_data["tot_acknowledged_pos"] += 1
