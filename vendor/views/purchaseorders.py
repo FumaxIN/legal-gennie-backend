@@ -49,7 +49,13 @@ class PurchaseOrderViewSet(
     @extend_schema(tags=["purchase_orders"], request=None, responses=PurchaseOrderSerializer)
     @action(detail=True, methods=["POST"])
     def acknowledge(self, request, *args, **kwargs):
-        instance = self.queryset.get(po_number=kwargs["po_number"])
+        try:
+            instance = self.queryset.get(po_number=kwargs["po_number"])
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"message": "PO not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         if instance.acknowledgment_date:
             return Response(
                 {"message": "PO has already been acknowledged."},
@@ -63,7 +69,13 @@ class PurchaseOrderViewSet(
     @extend_schema(tags=["purchase_orders"], request=CompletePurchaseOrderSerializer, responses=CompletePurchaseOrderSerializer)
     @action(detail=True, methods=["POST"])
     def complete(self, request, *args, **kwargs):
-        instance = self.queryset.get(po_number=kwargs["po_number"])
+        try:
+            instance = self.queryset.get(po_number=kwargs["po_number"])
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"message": "PO not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         if instance.status == "completed":
             return Response(
                 {"message": "PO has already been completed."},
@@ -78,7 +90,13 @@ class PurchaseOrderViewSet(
     @extend_schema(tags=["purchase_orders"], request=None, responses={status.HTTP_204_NO_CONTENT: None})
     @action(detail=True, methods=["POST"])
     def cancel(self, request, *args, **kwargs):
-        instance = self.queryset.get(po_number=kwargs["po_number"])
+        try:
+            instance = self.queryset.get(po_number=kwargs["po_number"])
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"message": "PO not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         if instance.status == "cancelled":
             return Response(
                 {"message": "PO has already been cancelled."},

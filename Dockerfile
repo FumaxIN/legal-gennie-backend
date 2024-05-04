@@ -1,26 +1,25 @@
 FROM archlinux:latest
 
-# Install dependencies
-RUN pacman -Syyu --noconfirm
-RUN pacman -S --noconfirm base-devel git cmake
-RUN pacman -S --noconfirm python python-pip redis
-RUN redis-server --daemonize yes
+# Install system dependencies
+RUN pacman -Syyu --noconfirm python python-pip redis
 
-# Set WORKDIR
+# Set the working directory
 WORKDIR /app
 
-# Copy the source code
-COPY . /app
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --break-system-packages
 
-# Install the python dependencies
-RUN pip install -r requirements.txt --break-system-packages
+# Copy the Django project code
+COPY . .
 
 # Run migrations and collect static files
 RUN python manage.py migrate
 
-# Run redis
-CMD ["celery", "-A", "core.celery_app", "worker", "--beat", "--loglevel=info"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Expose the port for Django
+EXPOSE 8000
 
-
-# Run the application
+# Start Redis and Celery worker
+CMD redis-server --daemonize yes && \
+    celery -A core.celery_app worker --beat --loglevel=info & \
+    python manage.py runserver 0.0.0.0:8000
