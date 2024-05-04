@@ -226,3 +226,9 @@ celery -A core.celery_app worker --beat --loglevel=info
     ```
     POST: /api/purchase_orders/40ce191c-65a5-44b2-8bd8-94705800e4a3/cancel
     ```
+  
+
+### Note for Performance Metrics  
+For efficient calculation of performance metrics, instead of iterating over all the POs, I have utilised `cached_data` field in `vendor` model which stores and updates total, completed, on-time and acknowledged POs after each update. <br />
+
+Celery schedules can be easily implemented and can be run once a day to fix the metrics. <br />
