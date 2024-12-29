@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from djangoql.admin import DjangoQLSearchMixin
 
-from .models.users import User
+from .models.users import User, LawyerMetadata
 
 @admin.register(User)
 class UserAdmin(DjangoQLSearchMixin, BaseUserAdmin):
@@ -41,6 +41,8 @@ class UserAdmin(DjangoQLSearchMixin, BaseUserAdmin):
                     "name",
                     "is_admin",
                     "deleted",
+                    "is_lawyer",
+                    "is_verified",
                 )
             },
         ),
@@ -56,4 +58,8 @@ class UserAdmin(DjangoQLSearchMixin, BaseUserAdmin):
             },
         )
     )
+
+@admin.register(LawyerMetadata)
+class LawyerMetadataAdmin(DjangoQLSearchMixin, admin.ModelAdmin):
+    pass
 

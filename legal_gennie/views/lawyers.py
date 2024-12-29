@@ -3,12 +3,13 @@ from rest_framework.mixins import CreateModelMixin, ListModelMixin, RetrieveMode
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 from rest_framework.response import Response
+from django_filters.rest_framework import FilterSet, OrderingFilter, CharFilter
 
 from utils.mixins import PartialUpdateModelMixin
 from utils.helpers import verify_lawyer_dl
 
-from legal_gennie.models import User
-from legal_gennie.serializers.lawyers import VerifyLawyerSerializer
+from legal_gennie.models import LawyerMetadata
+from legal_gennie.serializers.lawyers import VerifyLawyerSerializer, LawyersSerializer
 
 
 class VerifyLawyerViewSet(GenericViewSet, CreateModelMixin):
@@ -36,3 +37,25 @@ class VerifyLawyerViewSet(GenericViewSet, CreateModelMixin):
             {"message": "Lawyer verified successfully"},
             status=status.HTTP_200_OK,
         )
+
+
+
+class LawyerFiler(FilterSet):
+    name = CharFilter(field_name="user__name", lookup_expr="icontains")
+    lawyer_type = CharFilter(lookup_expr="icontains")
+
+    order_by = OrderingFilter(
+        fields=(
+            ("consultation_fee", "consultation_fee"),
+            ("call_fee", "call_fee"),
+        )
+    )
+
+
+class LawyersViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, DestroyModelMixin, PartialUpdateModelMixin):
+    queryset = LawyerMetadata.objects.filter(deleted=False)
+    serializer_class = LawyersSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filterset_class = LawyerFiler
+
+
