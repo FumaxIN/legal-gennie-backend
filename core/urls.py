@@ -18,7 +18,7 @@ urlpatterns = [
 # API URLs
 api_urlpatterns = [
     # API base URL
-    path("api/", include("vendor.api_router")),
+    path("api/", include("legal_gennie.api_router")),
     path("api/schema", SpectacularAPIView.as_view(), name="schema"),
 ]
 

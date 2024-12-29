@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'django_filters',
-    'vendor',
+    'legal_gennie',
 ]
 
 MIDDLEWARE = [
@@ -120,7 +120,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'vendor.User'
+AUTH_USER_MODEL = 'legal_gennie.User'
 
 
 # CELERY
@@ -169,8 +169,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Vendor management API",
-    "DESCRIPTION": "Api for vendor management system",
+    "TITLE": "Legal Gennie APIs",
+    "DESCRIPTION": "Api for Legal Gennie project",
     "VERSION": "4.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/",

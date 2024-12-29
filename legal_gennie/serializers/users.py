@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from vendor.models import User
+from legal_gennie.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):

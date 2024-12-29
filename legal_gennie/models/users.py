@@ -46,6 +46,8 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
     deleted = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    is_lawyer = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
 
     objects = Usermanager()
 

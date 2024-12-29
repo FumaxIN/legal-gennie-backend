@@ -5,7 +5,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 
-from vendor.serializers import UserSerializer, RegistrationSerializer, LoginSerializer
+from legal_gennie.serializers import UserSerializer, RegistrationSerializer, LoginSerializer
 
 
 def get_tokens_for_user(user):

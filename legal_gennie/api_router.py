@@ -2,25 +2,22 @@ from core import settings
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from vendor.views.auth import APIRegistrationView, APILoginView
-from vendor.views.vendors import VendorViewSet
-from vendor.views.purchaseorders import PurchaseOrderViewSet
+from legal_gennie.views.auth import APIRegistrationView, APILoginView
+from legal_gennie.views.lawyers import VerifyLawyerViewSet
 
-app_name = "vendor"
+app_name = "legal_gennie"
 
 router = routers.SimpleRouter(trailing_slash=False)
 if settings.DEBUG:
     router = routers.DefaultRouter(trailing_slash=False)
 
 
-router.register(r"vendors", VendorViewSet)
-router.register(r"purchase_orders", PurchaseOrderViewSet)
-
-
 auth_urls = [
     path("register", APIRegistrationView.as_view(), name="register"),
     path("login", APILoginView.as_view(), name="login"),
 ]
+
+router.register(r"lawyers", VerifyLawyerViewSet, basename="lawyers")
 
 urlpatterns = [
     path("auth/", include(auth_urls)),
