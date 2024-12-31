@@ -1,7 +1,7 @@
 FROM archlinux:latest
 
 # Install system dependencies
-RUN pacman -Syyu --noconfirm python python-pip redis
+RUN pacman -Syyu --noconfirm python python-pip redis rust gcc
 
 # Set the working directory
 WORKDIR /app
