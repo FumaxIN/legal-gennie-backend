@@ -1,8 +1,16 @@
 from datetime import timedelta
 from pathlib import Path
+import environ
+import os
+
+# Initialize environ
+env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Read .env file if it exists
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -10,6 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-z$y5w$!2ly)#46#tx$@3se*2*4eeswv5r%l%6#2l*7=#3g167y'
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -197,3 +206,6 @@ SIMPLE_JWT = {
 #     "http://127.0.0.1:8000",
 # ]
 CORS_ALLOW_ALL_ORIGINS = True
+
+# OpenAI API Key
+OPENAI_API_KEY = env('OPENAI_API_KEY', default='')

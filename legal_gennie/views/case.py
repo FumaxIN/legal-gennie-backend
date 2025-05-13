@@ -4,7 +4,7 @@ from rest_framework import status, permissions, parsers
 from drf_spectacular.utils import extend_schema
 from django.conf import settings
 from ..serializers import CaseCreateSerializer, CaseResponseSerializer, JudgmentSerializer
-from utils.helpers import generate_search_query_from_petition, fetch_indian_kanoon_judgments, fetch_judgment_details
+from utils.helpers import generate_search_query_from_petition, fetch_indian_kanoon_judgments, fetch_judgment_details, analyze_petition_with_openai
 import os
 import concurrent.futures
 
@@ -50,7 +50,18 @@ class CaseCreateView(APIView):
             
             # For each judgment, fetch detailed information for enhanced citation
             enhanced_judgments = self.fetch_details_concurrent(judgments[:10], token)
-            response_data["judgments"] = enhanced_judgments
+            response_data["judgments"] = judgments
+            
+            # Analyze petition with OpenAI using the enhanced judgments
+            analysis_result = analyze_petition_with_openai(petition, enhanced_judgments)
+            if not isinstance(analysis_result, dict) or 'error' in analysis_result:
+                # Log the error but continue with the response
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"OpenAI analysis failed: {analysis_result.get('error', 'Unknown error')}")
+            else:
+                # Add the analysis results to the response
+                response_data["analysis"] = analysis_result
         
         return Response(response_data, status=status.HTTP_201_CREATED)
         

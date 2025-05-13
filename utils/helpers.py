@@ -1,7 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-from typing import List, Dict, Any
+import json
+import time
+import logging
+from typing import List, Dict, Any, Optional, Union
+import openai
+from django.conf import settings
 
 
 def verify_lawyer_dl(registration_number: str):
@@ -222,7 +227,7 @@ def fetch_indian_kanoon_judgments(query: str, token: str) -> List[Dict[str, Any]
 def fetch_judgment_details(tid: int, token: str, max_retries: int = 3) -> Dict[str, Any]:
     """
     Fetches detailed information for a specific judgment from the Indian Kanoon API
-    using the document endpoint with curl and implements exponential backoff retry.
+    using the document endpoint with requests library and implements exponential backoff retry.
 
     Args:
         tid (int): The document ID (tid) for the judgment
@@ -233,38 +238,31 @@ def fetch_judgment_details(tid: int, token: str, max_retries: int = 3) -> Dict[s
         Dict[str, Any]: A dictionary containing detailed judgment information
     """
     import json
-    import subprocess
     import time
     import logging
 
     logger = logging.getLogger(__name__)
+    url = f'https://api.indiankanoon.org/doc/{tid}/'
+    headers = {
+        'Authorization': f'Token {token}'
+    }
 
     for attempt in range(max_retries):
         try:
-            # Construct the curl command
-            curl_command = [
-                'curl', '--silent',
-                '--location',
-                f'https://api.indiankanoon.org/doc/{tid}',
-                '--header', f'Authorization: Token {token}'
-            ]
+            # Make HTTP request using requests library
+            response = requests.post(url, headers=headers)
 
-            # Execute the curl command
-            process = subprocess.run(curl_command, capture_output=True, text=True)
-
-            # Check if the command was successful
-            if process.returncode != 0:
-                error_msg = f"Failed to fetch judgment details. Command failed with error: {process.stderr}"
+            # Check if the request was successful
+            if response.status_code != 200:
+                error_msg = f"Failed to fetch judgment details. HTTP Status Code: {response.status_code}"
                 logger.error(f"Attempt {attempt+1}/{max_retries}: {error_msg}")
                 if attempt == max_retries - 1:
                     return {"error": error_msg}
                 time.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s, etc.
                 continue
 
-            # Parse the JSON response
-            response_text = process.stdout
-
-            # Check if response is empty or whitespace only
+            # Check if response is empty
+            response_text = response.text
             if not response_text or response_text.isspace():
                 error_msg = f"Empty response received for judgment {tid}"
                 logger.error(f"Attempt {attempt+1}/{max_retries}: {error_msg}")
@@ -274,7 +272,7 @@ def fetch_judgment_details(tid: int, token: str, max_retries: int = 3) -> Dict[s
                 continue
 
             try:
-                data = json.loads(response_text)
+                data = response.json()
             except json.JSONDecodeError as e:
                 error_msg = f"Invalid JSON received: {response_text[:100]}... Error: {str(e)}"
                 logger.error(f"Attempt {attempt+1}/{max_retries}: {error_msg}")
@@ -330,3 +328,152 @@ def fetch_judgment_details(tid: int, token: str, max_retries: int = 3) -> Dict[s
     # This should never be reached due to the returns in the loop,
     # but adding as a fallback
     return {"error": "Maximum retries exceeded"}
+
+
+def analyze_petition_with_openai(petition: str, similar_judgments: List[Dict[str, Any]], api_key: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Analyzes a legal petition and similar judgments using OpenAI's 3.0-mini model to calculate
+    the winning percentage and provide steps to improve it, including specific legal references.
+    
+    Args:
+        petition (str): The legal petition text to analyze
+        similar_judgments (List[Dict[str, Any]]): A list of similar judgments with relevant details
+        api_key (Optional[str]): OpenAI API key, if not provided will look for OPENAI_API_KEY in settings
+        
+    Returns:
+        Dict[str, Any]: A dictionary containing the analysis results, including:
+            - winning_percentage: Estimated chances of winning (float between 0-100)
+            - improvement_steps: List of specific actions to improve the petition
+            - rationale: Explanation for the estimated winning percentage
+            - legal_references: List of specific sections and articles from Indian law to cite
+            - error: Error message if the API call fails
+    """
+    logger = logging.getLogger(__name__)
+    
+    # Set API key from provided parameter, settings, or environment
+    if api_key:
+        openai.api_key = api_key
+    elif settings.OPENAI_API_KEY:
+        openai.api_key = settings.OPENAI_API_KEY
+        
+    # Validate inputs
+    if not petition or not isinstance(petition, str):
+        return {"error": "Invalid petition: Must provide a non-empty string"}
+    
+    if not similar_judgments or not isinstance(similar_judgments, list):
+        return {"error": "Invalid similar_judgments: Must provide a non-empty list"}
+    
+    try:
+        # Prepare judgment summaries to reduce token count
+        judgment_summaries = []
+        for idx, judgment in enumerate(similar_judgments[:5]):  # Limit to 5 judgments
+            # Extract the most important information from each judgment
+            judgment_summary = {
+                "id": idx + 1,
+                "title": judgment.get("title", ""),
+                "outcome": judgment.get("outcome", "Unknown"),
+                "key_points": []
+            }
+            
+            # Extract key points from full text if available
+            full_text = judgment.get("full_text", "")
+            if full_text:
+                # Try to extract key points, decision and reasoning
+                if len(full_text) > 1000:  # If text is very long, take snippets
+                    judgment_summary["snippet"] = full_text[:500] + "..." + full_text[-500:]
+                else:
+                    judgment_summary["snippet"] = full_text
+                
+            judgment_summaries.append(judgment_summary)
+        
+        # Construct the prompt for the OpenAI API
+        prompt = f"""
+You are a legal expert assistant analyzing a petition and similar judgments.
+
+**PETITION:**
+{petition}
+
+**SIMILAR JUDGMENTS:**
+{json.dumps(judgment_summaries, indent=2)}
+
+Task: Analyze the petition against the similar judgments to:
+1. Calculate a winning percentage (0-100%) based on precedent and legal merit
+2. Identify specific steps to improve the petition's chances of success
+3. Provide a brief rationale for your assessment
+4. Provide technical details about specific sections/articles of Indian law that should be cited in the petition
+
+Output the results in the following JSON format:
+{{
+  "winning_percentage": [numeric value between 0-100],
+  "improvement_steps": [
+    "Step 1: [specific actionable instruction]",
+    "Step 2: [specific actionable instruction]",
+    ...
+  ],
+  "rationale": "[concise explanation of the winning percentage]",
+  "legal_references": [
+    {{
+      "section": "[specific section number]",
+      "act": "[name of the act/law]",
+      "year": "[year of the act]",
+      "description": "[brief description of the section's relevance]"
+    }},
+    ...
+  ]
+}}
+
+Your assessment must be based on legal precedent, the strength of arguments, and factual similarities. For the legal references, be specific about the exact sections, articles, and provisions from relevant Indian laws (such as the Indian Penal Code, Code of Civil Procedure, Constitution of India, specific state laws, etc.) that are applicable to this petition and would strengthen the legal arguments when cited.
+"""
+
+        # Call the OpenAI API
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",  # Using the 3.0-mini model
+            messages=[
+                {"role": "system", "content": "You are a legal expert assistant analyzing petitions."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,  # Lower temperature for more consistent results
+            response_format={"type": "json_object"}  # Ensure response is in JSON format
+        )
+        
+        # Extract and parse the response
+        response_content = response.choices[0].message.content
+        
+        try:
+            result = json.loads(response_content)
+            
+            # Validate the response format
+            if "winning_percentage" not in result or "improvement_steps" not in result or "rationale" not in result:
+                logger.warning(f"Incomplete response from OpenAI API: {response_content}")
+                result = {
+                    "winning_percentage": result.get("winning_percentage", 0),
+                    "improvement_steps": result.get("improvement_steps", []),
+                    "rationale": result.get("rationale", "Unable to provide complete analysis"),
+                    "legal_references": result.get("legal_references", []),
+                    "warning": "Incomplete analysis result"
+                }
+                
+            # Ensure winning_percentage is a number between 0-100
+            if not isinstance(result["winning_percentage"], (int, float)):
+                result["winning_percentage"] = 0
+            
+            result["winning_percentage"] = max(0, min(100, float(result["winning_percentage"])))
+            
+            # Ensure legal_references exists and is a list
+            if "legal_references" not in result:
+                result["legal_references"] = []
+            elif not isinstance(result["legal_references"], list):
+                result["legal_references"] = []
+            
+            return result
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse OpenAI response as JSON: {str(e)}")
+            return {
+                "error": "Failed to parse analysis result",
+                "raw_response": response_content
+            }
+            
+    except Exception as e:
+        logger.error(f"Error analyzing petition with OpenAI: {str(e)}")
+        return {"error": f"Failed to analyze petition: {str(e)}"}
