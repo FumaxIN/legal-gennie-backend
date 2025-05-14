@@ -4,7 +4,7 @@ from rest_framework_nested import routers
 
 from legal_gennie.views.auth import APIRegistrationView, APILoginView
 from legal_gennie.views.lawyers import VerifyLawyerViewSet, LawyersListViewSet, LawyerViewSet
-from legal_gennie.views.case import CaseCreateView
+from legal_gennie.views.case import CaseView
 
 app_name = "legal_gennie"
 
@@ -24,6 +24,6 @@ router.register(r"lawyers", LawyerViewSet, basename="lawyer")
 
 urlpatterns = [
     path("auth/", include(auth_urls)),
-    path("cases", CaseCreateView.as_view(), name="predict_outcome"),
+    path("cases", CaseView.as_view(), name="predict_outcome"),
     path("", include(router.urls)),
 ]

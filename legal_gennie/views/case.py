@@ -8,7 +8,7 @@ from utils.helpers import generate_search_query_from_petition, fetch_indian_kano
 import os
 import concurrent.futures
 
-class CaseCreateView(APIView):
+class CaseView(APIView):
     permission_classes = [permissions.AllowAny]
     parser_classes = [parsers.JSONParser]
 
